@@ -1,18 +1,16 @@
-const JS_FILE = 'https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.js'
-const PATH = 'data/third/sync-profile-to-skeen'
 const PORT = 52777
 
 const onRun = async () => {
   const store = Plugins.useProfilesStore()
   if (store.profiles.length === 0) {
-    throw 'Please create a configuration first.'
+    throw 'Please create a profile first'
   }
   let profile = null
   if (store.profiles.length === 1) {
     profile = store.profiles[0]
   } else {
     profile = await Plugins.picker.single(
-      'Please select the configuration you want to share.',
+      'Please select the profile you want to share',
       store.profiles.map((v) => ({
         label: v.name,
         value: v
@@ -24,8 +22,6 @@ const onRun = async () => {
 }
 
 const Share = async (profile) => {
-  await loadDependence()
-
   await transformLocalRuleset(profile)
 
   const skeenMode = await Plugins.picker.single(
@@ -71,8 +67,7 @@ const Share = async (profile) => {
   const ips = await getIPAddress()
   const urls = await Promise.all(
     ips.map((ip) => {
-      const url = `http://${ip}:${PORT}`
-      return getQRCode(url, url)
+      return { url: `http://${ip}:${PORT}`}
     })
   )
 
@@ -82,28 +77,18 @@ const Share = async (profile) => {
 
   await Plugins.alert(
     Plugin.name,
-    '### SKeen Configuration Sharing\n\n' +
-      'Download for SSH using command：\n\n' +
+    '# SKeen Sync\n\n' +
+      '### Entware SSH command\n\n' +
       '```bash\n' +
       `curl -o /opt/etc/skeen/config.json ${ips[0] ? `http://${ips[0]}:${PORT}` : 'URL'}\n` +
       '```\n\n' +
-      '|Share link|QR code|\n|-|-|\n' +
-      urls.map((url) => `|${url.url}|![](${url.qrcode})|`).join('\n'),
+      '### Share links\n\n' +
+      urls.map((url) => `- ${url.url}`).join('\n'),
     { type: 'markdown' }
   )
   close()
 }
 
-const onInstall = async () => {
-  await Plugins.Download(JS_FILE, PATH + '/qrcode.min.js')
-  await Plugins.message.success('Installation successful')
-  return 0
-}
-
-const onUninstall = async () => {
-  await Plugins.RemoveFile(PATH)
-  return 0
-}
 
 function validateRequiredTags(config, skeenMode) {
   const requiredInboundTags = []
@@ -253,34 +238,6 @@ async function transformLocalRuleset(profile) {
       }
     }
   }
-}
-
-function loadDependence() {
-  return new Promise(async (resolve, reject) => {
-    if (window.QRCode) {
-      resolve()
-      return
-    }
-    try {
-      const text = await Plugins.ReadFile(PATH + '/qrcode.min.js')
-      const script = document.createElement('script')
-      script.id = Plugin.id
-      script.text = text
-      document.body.appendChild(script)
-      resolve()
-    } catch (error) {
-      console.error(error)
-      reject('QR code generation dependency installation failed. Please reinstall this plugin.')
-    }
-  })
-}
-
-function getQRCode(rawUrl, rawStr) {
-  return new Promise((resolve) => {
-    QRCode.toDataURL(rawStr, async (err, url) => {
-      resolve({ url: rawUrl, qrcode: url })
-    })
-  })
 }
 
 function isPrivateIP(ip) {
