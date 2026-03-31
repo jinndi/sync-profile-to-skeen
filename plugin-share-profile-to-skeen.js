@@ -47,24 +47,7 @@ const Share = async (profile) => {
     ['0']
   )
 
-  const type = await Plugins.picker.single(
-    'Sing-box version',
-    [
-      { label: 'v1.11.0-', value: 'legacy' },
-      { label: 'v1.11.0+', value: 'main' },
-      { label: 'v1.12.0+', value: 'stable' }
-    ],
-    ['stable']
-  )
-
-  let config = await Plugins.generateConfig(profile, type === 'stable' || type === 'legacy')
-
-  if (type === 'legacy') {
-    _adaptToMain(config)
-    _adaptToLegacy(config)
-  } else if (type === 'main') {
-    _adaptToMain(config)
-  }
+  let config = await Plugins.generateConfig(profile, 'stable')
 
   ensureSKeenInbounds(config, skeenMode)
   replaceClashUIToZashboard(config)
@@ -100,7 +83,7 @@ const Share = async (profile) => {
   await Plugins.alert(
     Plugin.name,
     '### SKeen Configuration Sharing\n\n' +
-      '在 Download for SSH using command：\n\n' +
+      'Download for SSH using command：\n\n' +
       '```bash\n' +
       `curl -o /opt/etc/skeen/config.json ${ips[0] ? `http://${ips[0]}:${PORT}` : 'URL'}\n` +
       '```\n\n' +
@@ -187,16 +170,20 @@ function ensureSKeenInbounds(config, skeenMode) {
     }
   }
 
-  filterInbound('tun').forEach(tun => {
-    if (tun ) {
+  const tuns = filterInbound('tun');
+
+  for (let i = 0; i < tuns.length; i++) {
+    const tun = tuns[i];
+
+    if (tun) {
       if (tun.auto_route !== false) {
-        tun.auto_route = false
+        tun.auto_route = false;
       }
       if (tun.strict_route !== false) {
-        tun.strict_route = false
+        tun.strict_route = false;
       }
     }
-  })
+  }
 
   if (!config.dns) {
     config.dns = { servers: [], rules: [] }
@@ -216,15 +203,15 @@ function ensureSKeenInbounds(config, skeenMode) {
     config.route.rules = []
   }
 
-  const hasSniffRule = config.route.rules.some((rule) => rule.action === 'sniff')
-
-  if (!hasSniffRule) {
-    const sniffRuleIndex = config.route.rules.findIndex((rule) => rule.action === 'sniff')
-    if (sniffRuleIndex === -1) {
-      config.route.rules.unshift({
-        action: 'sniff'
-      })
+  const sniffRuleIndex = config.route.rules.findIndex((rule) => rule.action === 'sniff')
+  const newSniffRule = { action: 'sniff' }
+  if (sniffRuleIndex === -1) {
+    config.route.rules.unshift(newSniffRule)
+  }else{
+    if(Object.hasOwn(config.route.rules[sniffRuleIndex], 'inbounds')){
+      delete config.route.rules[sniffRuleIndex].inbounds
     }
+    config.route.rules[sniffRuleIndex] = {...newSniffRule, ...config.route.rules[sniffRuleIndex]}
   }
 
   const hijackDnsRuleIndex = config.route.rules.findIndex((rule) => rule.action === 'hijack-dns')
@@ -266,142 +253,6 @@ async function transformLocalRuleset(profile) {
       }
     }
   }
-}
-
-const _adaptToMain = (config) => {
-  const DnsServer = {
-    Local: 'local',
-    Hosts: 'hosts',
-    Tcp: 'tcp',
-    Udp: 'udp',
-    Tls: 'tls',
-    Https: 'https',
-    Quic: 'quic',
-    H3: 'h3',
-    Dhcp: 'dhcp',
-    FakeIP: 'fakeip'
-  }
-
-  const generateDnsServerURL = (dnsServer) => {
-    const { type, server_port, path, server, interface: _interface } = dnsServer
-    let address = ''
-    if (type == DnsServer.Https) {
-      address = `https://${server}${server_port ? ':' + server_port : ''}${path ? path : ''}`
-    } else if (type == DnsServer.H3) {
-      address = `h3://${server}${server_port ? ':' + server_port : ''}${path ? path : ''}`
-    } else if (type == DnsServer.Dhcp) {
-      address = `dhcp://${_interface}`
-    } else if (type == DnsServer.FakeIP) {
-      address =
-        'fake-ip://' +
-        (dnsServer.inet4_range ? dnsServer.inet4_range : '') +
-        (dnsServer.inet6_range ? (dnsServer.inet4_range ? ',' : '') + dnsServer.inet6_range : '')
-    } else if (type === DnsServer.Hosts) {
-      address = 'hosts'
-    } else if (type === DnsServer.Local) {
-      address = 'local'
-    } else {
-      address = `${type}://${server}${server_port ? ':' + server_port : ''}`
-    }
-    return address
-  }
-
-  config.dns.rules.unshift({
-    action: 'route',
-    server: config.route.default_domain_resolver.server,
-    outbound: 'any'
-  })
-  delete config.route.default_domain_resolver
-  config.dns.servers = config.dns.servers.map((server) => {
-    const isFakeIP = server.type === DnsServer.FakeIP
-    if (isFakeIP) {
-      config.dns.fakeip = {
-        enabled: true,
-        inet4_range: server.inet4_range,
-        inet6_range: server.inet6_range
-      }
-    }
-    let detour = server.detour
-    if (!detour) {
-      const isSupportDetour = [
-        DnsServer.Local,
-        DnsServer.Tcp,
-        DnsServer.Udp,
-        DnsServer.Tls,
-        DnsServer.Quic,
-        DnsServer.Https,
-        DnsServer.H3,
-        DnsServer.Dhcp
-      ].includes(server.type)
-      isSupportDetour && (detour = config.outbounds.find((v) => v.type === 'direct')?.tag)
-    }
-    return {
-      tag: server.tag,
-      address: isFakeIP ? 'fakeip' : generateDnsServerURL(server),
-      address_resolver: server.domain_resolver,
-      detour: detour
-    }
-  })
-  config.dns.rules = config.dns.rules.filter((rule) => rule.ip_accept_any === undefined)
-  config.dns.rules.forEach((rule) => {
-    delete rule.strategy
-  })
-}
-
-const _adaptToLegacy = (config) => {
-  const isExists = (id) => config.outbounds.find((v) => v.type === id && v.tag === id)
-
-  if (!isExists('direct')) {
-    config.outbounds.push({
-      type: 'direct',
-      tag: 'direct'
-    })
-  }
-
-  if (!isExists('block')) {
-    config.outbounds.push({
-      type: 'block',
-      tag: 'block'
-    })
-  }
-
-  config.outbounds.push({
-    type: 'dns',
-    tag: 'dns-out'
-  })
-
-  config.route.rules = config.route.rules.flatMap((rule) => {
-    if (rule.action === 'sniff') {
-      if (rule.inbound) {
-        const inbound = config.inbounds.find((v) => v.tag === rule.inbound)
-        if (inbound) {
-          inbound.sniff = true
-        }
-      }
-      return []
-    } else if (rule.action === 'resolve') {
-      if (rule.inbound) {
-        const inbound = config.inbounds.find((v) => v.tag === rule.inbound)
-        if (inbound) {
-          inbound.domain_strategy = rule.strategy
-        }
-      }
-      return []
-    } else if (rule.action === 'reject') {
-      rule.outbound = 'block'
-    } else if (rule.action === 'hijack-dns') {
-      rule.outbound = 'dns-out'
-    }
-    rule.action = undefined
-    return rule
-  })
-
-  config.dns.rules.forEach((rule) => {
-    if (rule.action === 'reject') {
-      rule.outbound = 'block'
-    }
-    rule.action = undefined
-  })
 }
 
 function loadDependence() {
