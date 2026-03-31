@@ -1,5 +1,6 @@
 const JS_FILE = 'https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.js'
 const PATH = 'data/third/share-profile-to-skeen'
+let mode = 'tproxy'
 
 const onRun = async () => {
   const store = Plugins.useProfilesStore()
@@ -27,7 +28,7 @@ const Share = async (profile) => {
 
   await transformLocalRuleset(profile)
 
-  const mode = await Plugins.picker.single(
+  mode = await Plugins.picker.single(
     'SKeen mode',
     [
       { label: 'Redirect', value: 'redirect' },
