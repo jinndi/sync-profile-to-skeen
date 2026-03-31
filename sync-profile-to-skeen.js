@@ -135,7 +135,7 @@ function ensureSKeenInbounds(config, skeenMode) {
         type: 'redirect',
         tag: 'redirect-in',
         listen: '::',
-        listen_port: 2081,
+        listen_port: 65081,
         tcp_fast_open: true
       })
     }
@@ -147,7 +147,7 @@ function ensureSKeenInbounds(config, skeenMode) {
         type: 'tproxy',
         tag: 'tproxy-in',
         listen: '::',
-        listen_port: 2082,
+        listen_port: 65082,
         udp_timeout: "3m0s",
         udp_fragment: true,
         ...(skeenMode === 'hybrid' ? {network: "udp"} : {tcp_fast_open: true})
