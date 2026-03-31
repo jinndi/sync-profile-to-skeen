@@ -1,12 +1,12 @@
-# Sync plugin configuration from GUI.for.SingBox to SKeen
-<h3 align="center">
-Generates an Entware sing-box (SKeen) configuration with required inbound components (redirect-in / tproxy-in) and the Zashboard panel
-</h3>
+## Sync profile from GUI.for.SingBox to SKeen
+<h6 align="center">
+Generates an Entware sing-box (SKeen) configuration from a GUI.for.SingBox profile, including required inbound components (redirect-in / tproxy-in) and the Zashboard panel
+</h6>
 
 Plugin link:
 
 ```
-https://raw.githubusercontent.com/jinndi/plugin-share-profile-to-skeen/main/plugin-share-profile-to-skeen.js
+https://raw.githubusercontent.com/jinndi/sync-profile-to-skeen/main/sync-profile-to-skeen.js
 ```
 
 ### Usage with GUI.for.SingBox
