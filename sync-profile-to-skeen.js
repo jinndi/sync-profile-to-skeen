@@ -126,7 +126,6 @@ function ensureSKeenInbounds(config, skeenMode) {
     config.inbounds = []
   }
 
-  const filterInbound = (type) => config.inbounds.filter((i) => i.type === type)
   const existingTags = config.inbounds.map((inbound) => inbound.tag)
 
   if (['redirect', 'hybrid'].includes(skeenMode)){
@@ -155,20 +154,22 @@ function ensureSKeenInbounds(config, skeenMode) {
     }
   }
 
-  const tuns = filterInbound('tun');
-
-  for (let i = 0; i < tuns.length; i++) {
-    const tun = tuns[i];
-
-    if (tun) {
-      if (tun.auto_route !== false) {
-        tun.auto_route = false;
-      }
-      if (tun.strict_route !== false) {
-        tun.strict_route = false;
-      }
-    }
+  const disableTUNRoutes = tun => {
+    tun.auto_route = false
+    tun.strict_route = false
   }
+  config.inbounds.filter((i) => i.type === 'tun').forEach(disableTUNRoutes)
+
+
+  const allowedNaiveTlsKeys = ['enabled', 'server_name', 'ech']
+  config.outbounds
+    .filter(o => o.type === 'naive' && o.tls)
+    .forEach(o => {
+      o.tls = Object.fromEntries(
+        Object.entries(o.tls)
+          .filter(([key]) => allowedNaiveTlsKeys.includes(key))
+      )
+    })
 
   if (!config.dns) {
     config.dns = { servers: [], rules: [] }
