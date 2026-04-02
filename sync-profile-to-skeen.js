@@ -80,7 +80,11 @@ const Share = async (profile) => {
     '# SKeen Sync\n\n' +
       '### Entware SSH command\n\n' +
       '```bash\n' +
-      `curl -o /opt/etc/skeen/config.json ${ips[0] ? `http://${ips[0]}:${PORT}` : 'URL'}\n` +
+      `skeen sync ${ips[0] ? `http://${ips[0]}:${PORT}` : 'URL'}\n` +
+      '```\n\n' +
+      '### WEB CLI command\n\n' +
+      '```bash\n' +
+      `exec skeen sync ${ips[0] ? `http://${ips[0]}:${PORT}` : 'URL'}\n` +
       '```\n\n' +
       '### Share links\n\n' +
       urls.map((url) => `- ${url.url}`).join('\n'),
