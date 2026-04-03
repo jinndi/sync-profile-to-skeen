@@ -1,6 +1,7 @@
 ## Sync profile from GUI.for.SingBox to SKeen
 Generates an Entware sing-box (SKeen) configuration from a GUI.for.SingBox profile, including required inbound components (redirect-in / tproxy-in) and the Zashboard panel
 
+<img width="466" height="415" alt="SKeen Sync" src="https://github.com/user-attachments/assets/f346d5bc-913e-45e1-ade1-046510197a02" />
 
 Plugin link:
 
