@@ -44,6 +44,9 @@ const Share = async (profile) => {
 }
 
 function ensureConfig(config, options) {
+  ////schema
+  config.$schema = "https://gist.githubusercontent.com/artiga033/fea992d95ad44dc8d024b229223b1002/raw/1d0b8a30b74992321acfd303814319eeea6239a3/sing-box.schema.json"
+  
   //// inbounds
   if (!config.inbounds) {
     config.inbounds = []
