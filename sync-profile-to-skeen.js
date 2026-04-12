@@ -47,10 +47,53 @@ function ensureConfig(config, options) {
   ////schema
   config.$schema = "https://gist.githubusercontent.com/artiga033/fea992d95ad44dc8d024b229223b1002/raw/1d0b8a30b74992321acfd303814319eeea6239a3/sing-box.schema.json"
   
-  //// inbounds
+  //// base structure
+  if (!config.dns) {
+    config.dns = { servers: [], rules: [] }
+  }
+  if (!config.dns.servers) {
+    config.dns.servers = []
+  }
+  if (!config.dns.rules) {
+    config.dns.rules = []
+  }
   if (!config.inbounds) {
     config.inbounds = []
   }
+  if (!config.route) {
+    config.route = { rules: [] }
+  }
+  if (!config.route.rules) {
+    config.route.rules = []
+  }
+
+  //// dns
+  const fakeipServer = config.dns.servers.find((s) => s.type === 'fakeip')
+  if (fakeipServer){
+    if(fakeipServer.inet4_range) fakeipServer.inet4_range = '198.18.0.0/15'
+    if(options.ipv6Mode === '0' && fakeipServer.inet6_range){
+      delete fakeipServer.inet6_range
+    }else{
+      fakeipServer.inet6_range = 'fc00::/18'
+    }
+  }
+  config.dns.reverse_mapping = false
+  if (options.reverseMapping === '1') {
+    config.dns.reverse_mapping = true
+  }
+  let dnsStrategy = 'prefer_ipv4'
+  if (options.ipv6Mode === '0') {
+    dnsStrategy = 'ipv4_only'
+  }
+  config.dns.strategy = dnsStrategy
+  config.dns.rules.forEach((rule) => {
+    if (rule.strategy) rule.strategy = dnsStrategy
+  })
+  config.route.rules.forEach((rule) => {
+    if (rule.strategy) rule.strategy = dnsStrategy
+  })
+
+  //// inbounds
   const existingTags = config.inbounds.map((inbound) => inbound.tag)
   if (['redirect', 'hybrid'].includes(options.skeenMode)){
     if (!existingTags.includes('redirect-in')) {
@@ -104,43 +147,7 @@ function ensureConfig(config, options) {
       }
     })   
 
-  //// dns
-  if (!config.dns) {
-    config.dns = { servers: [], rules: [] }
-  }
-  if (!config.dns.servers) {
-    config.dns.servers = []
-  }
-  if (!config.dns.rules) {
-    config.dns.rules = []
-  }
-  const fakeipServer = config.dns.servers.find((s) => s.type === 'fakeip')
-  if (fakeipServer){
-    if(fakeipServer.inet4_range) fakeipServer.inet4_range = '198.18.0.0/15'
-    if(options.ipv6Mode === '0' && fakeipServer.inet6_range){
-      delete fakeipServer.inet6_range
-    }else{
-      fakeipServer.inet6_range = 'fc00::/18'
-    }
-  }
-
-  if (options.ipv6Mode === '0') {
-    config.dns.strategy = 'ipv4_only'
-    config.dns.rules.forEach((rule) => {
-      if (rule.strategy) rule.strategy = 'ipv4_only'
-    })
-    config.route.rules.forEach((rule) => {
-      if (rule.strategy) rule.strategy = 'ipv4_only'
-    })
-  }
-
   //// route
-  if (!config.route) {
-    config.route = { rules: [] }
-  }
-  if (!config.route.rules) {
-    config.route.rules = []
-  }
   const sniffRuleIndex = config.route.rules.findIndex((rule) => rule.action === 'sniff')
   const newSniffRule = { action: 'sniff' }
   if (sniffRuleIndex === -1) {
@@ -242,12 +249,13 @@ async function openSettingsModal() {
       data() {
         return {
           skeenMode: 'tproxy',
-          ipv6Mode: '0'
+          ipv6Mode: '0',
+          reverseMapping: '0'
         }
       },
       methods: {
         onConfirm() {
-          resolve({ skeenMode: this.skeenMode, ipv6Mode: this.ipv6Mode })
+          resolve({ skeenMode: this.skeenMode, ipv6Mode: this.ipv6Mode, reverseMapping: this.reverseMapping })
           modal.destroy()
         },
         onCancel() {
@@ -265,6 +273,10 @@ async function openSettingsModal() {
             <h5>IPv6</h5>
             <Radio v-model="ipv6Mode" :options="ipv6Options" />
           </div>
+          <div class="flex items-center justify-between">
+            <h5>DNS Reverse Mapping</h5>
+            <Radio v-model="reverseMapping" :options="reverseMappingOptions" />
+          </div>
           <div class="flex justify-end space-x-2" style="margin: 30px auto 10px auto;">
             <Button class="m-2" type="text" @click="onCancel">Cancel</Button>
             <Button class="m-2" type="primary" @click="onConfirm">Create</Button>
@@ -280,6 +292,12 @@ async function openSettingsModal() {
           ]
         },
         ipv6Options() {
+          return [
+            { label: 'Enabled', value: '1' },
+            { label: 'Disable', value: '0' }
+          ]
+        },
+        reverseMappingOptions() {
           return [
             { label: 'Enabled', value: '1' },
             { label: 'Disable', value: '0' }
