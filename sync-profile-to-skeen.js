@@ -136,7 +136,11 @@ function ensureConfig(config, options) {
       )
     })
   config.outbounds
-    .filter(o => o.type === 'vless' && o.tls.reality && !o.tls.utls)
+    .filter(o =>
+      o.type === 'vless' &&
+      o.tls?.reality &&
+      !o.tls?.utls?.enabled
+    )
     .forEach(o => {
       o.tls = {
         ...o.tls,
@@ -145,7 +149,7 @@ function ensureConfig(config, options) {
           fingerprint: "chrome"
         }
       }
-    })   
+    }) 
 
   //// route
   const sniffRuleIndex = config.route.rules.findIndex((rule) => rule.action === 'sniff')
