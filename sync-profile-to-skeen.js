@@ -58,7 +58,7 @@ export default async (Plugin) => {
   }
 
   function ensureConfig(config, options) {
-    config.$schema = "https://gist.githubusercontent.com/artiga033/fea992d95ad44dc8d024b229223b1002/raw/1d0b8a30b74992321acfd303814319eeea6239a3/sing-box.schema.json"
+    config.$schema = "https://sing-box.sagernet.org/schema.json"
     if (!config.dns) config.dns = { servers: [], rules: [] }
     if (!config.dns.servers) config.dns.servers = []
     if (!config.dns.rules) config.dns.rules = []
@@ -84,8 +84,7 @@ export default async (Plugin) => {
         type: 'redirect', 
         tag: 'redirect-in', 
         listen: '::', 
-        listen_port: 65081, 
-        tcp_fast_open: true 
+        listen_port: 65081
       })
     }
     if (['tproxy', 'hybrid'].includes(options.firewallMode) && !tags.includes('tproxy-in')) {
@@ -94,9 +93,7 @@ export default async (Plugin) => {
         tag: 'tproxy-in', 
         listen: '::', 
         listen_port: 65082,
-        udp_timeout: '1m0s', 
-        udp_fragment: true,
-        ...(options.firewallMode === 'hybrid' ? { network: 'udp' } : { tcp_fast_open: true })
+        ...(options.firewallMode === 'hybrid' ? { network: 'udp' } : {})
       })
     }
     if (options.dnsInbound.enable && !tags.includes('dns-in')) {
@@ -110,7 +107,6 @@ export default async (Plugin) => {
 
     config.inbounds.filter(i => i.type === 'tun').forEach(tun => { 
       tun.auto_route = false
-      tun.strict_route = false 
     })
 
     const naiveTLSKeys = ['enabled', 'server_name', 'ech']
@@ -185,10 +181,6 @@ export default async (Plugin) => {
     else {
       const si = config.route.rules.findIndex(r => r.action === 'sniff')
       config.route.rules.splice(si !== -1 ? si + 1 : 0, 0, newHijack)
-    }
-
-    if (config.experimental?.clash_api) {
-      config.experimental.clash_api.external_ui_download_url = 'https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip'
     }
   }
 
@@ -478,7 +470,7 @@ export default async (Plugin) => {
               </div>
               <div style="flex: 1; overflow: auto; padding: 20px;">
                 <div style="width: 800px; min-width: 800px;">
-                  <CodeViewer v-model="editedConfig" lang="json" :editable="true" />
+                  <CodeEditor v-model="editedConfig" lang="json" :editable="true" />
                 </div>
               </div>
               <div style="padding: 16px; display: flex; justify-content: flex-end; gap: 8px;">
