@@ -2,7 +2,7 @@
 
 🇺🇸 **English** | [🇷🇺 На русском](README-RU.md)
 
-Generates a sing-box configuration for SKeen based on a GUI.for.SingBox profile, including the necessary inbound components (**redirect-in** / **tproxy-in**) and the **Zashboard** panel.
+Generates a sing-box configuration for SKeen based on a GUI.for.SingBox profile, including the necessary inbound components (**redirect-in** / **tproxy-in**).
 
 <img width="695" height="550" alt="edit" src="https://github.com/user-attachments/assets/0a876bc1-a1d8-4a28-a760-62c3844fc763" />
 <img width="695" height="454" alt="sync" src="https://github.com/user-attachments/assets/99b658f1-3cfc-48b8-ae3f-ca6e9a9dad5f" />
@@ -24,8 +24,7 @@ https://raw.githubusercontent.com/jinndi/sync-profile-to-skeen/main/sync-profile
 3. Create and configure your profile step-by-step in the **Profiles** section.
 4. Add the plugin in the **Plugins** section using the link provided above.
 5. Execute the generated command via SSH in Entware or via the router's WEB CLI (using the `parse` button).
-6. Ensure that the `"sing_config.enable"` parameter is set to `1` in the SKeen configuration (`skeen.json`).
-7. Restart SKeen using the SSH command `skeen restart` or via the WEB CLI `exec skeen restart`.
+6. Restart SKeen using the SSH command `skeen restart` or via the WEB CLI `exec skeen restart`.
 
 #### Q: On Linux, the GUI.for.SingBox application crashes on startup with a `SIGSEGV: segmentation violation` error (pointing to `cgo` or `_Cfunc_gtk_main` in logs). How to fix this?
 

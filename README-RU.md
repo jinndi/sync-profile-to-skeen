@@ -2,7 +2,7 @@
 
 🇷🇺 **Русский** | [🇺🇸 English](README.md)
 
-Генерирует конфигурацию sing-box для SKeen на основе профиля GUI.for.SingBox, включая необходимые входящие компоненты (**redirect-in** / **tproxy-in**) и панель **Zashboard**.
+Генерирует конфигурацию sing-box для SKeen на основе профиля GUI.for.SingBox, включая необходимые входящие компоненты (**redirect-in** / **tproxy-in**).
 
 
 <img width="695" height="550" alt="edit" src="https://github.com/user-attachments/assets/0a876bc1-a1d8-4a28-a760-62c3844fc763" />
@@ -24,8 +24,7 @@ https://raw.githubusercontent.com/jinndi/sync-profile-to-skeen/main/sync-profile
 3. Создайте и настройте шаг за шагом профиль в разделе **Profiles**.
 4. Добавьте плагин в разделе **Plugins**, используя ссылку, указанную выше.
 5. Выполните сгенерированную команду через SSH в Entware или через WEB CLI (parse).
-6. Убедитесь, что в конфигурации SKeen (`skeen.json`) параметр `"sing_config.enable"` установлен в значение `1`.
-7. Перезапустите SKeen с помощью команды SSH `skeen restart` или через WEB CLI `exec skeen restart`.
+6. Перезапустите SKeen с помощью команды SSH `skeen restart` или через WEB CLI `exec skeen restart`.
 
 
 #### Q: В Linux приложение GUI.for.SingBox падает при запуске с ошибкой `SIGSEGV: segmentation violation` (в логах `cgo` или `_Cfunc_gtk_main`). Как исправить?
